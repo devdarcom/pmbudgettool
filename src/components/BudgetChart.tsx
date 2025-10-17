@@ -36,6 +36,9 @@ export const BudgetChart: React.FC<BudgetChartProps> = ({
   onToggleVisibility,
   onExportPNG,
   onExportPDF,
+  iterations,
+  budgetParams,
+  metrics,
 }) => {
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -59,7 +62,7 @@ export const BudgetChart: React.FC<BudgetChartProps> = ({
             Export PNG
           </button>
           <button
-            onClick={onExportPDF}
+            onClick={() => onExportPDF(iterations, budgetParams, metrics)}
             className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors"
           >
             <FileText size={16} />
