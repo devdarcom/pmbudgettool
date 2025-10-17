@@ -1,5 +1,6 @@
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { IterationData, BudgetParams } from '../types/budget';
 
 export const exportChartToPNG = async () => {
   const chartElement = document.getElementById('budget-chart');
@@ -24,7 +25,11 @@ export const exportChartToPNG = async () => {
   }
 };
 
-export const exportChartToPDF = async () => {
+export const exportChartToPDF = async (
+  iterations: IterationData[],
+  budgetParams: BudgetParams,
+  metrics: { totalBudget: number; consumedBudget: number; consumptionRate: number }
+) => {
   const chartElement = document.getElementById('budget-chart');
   if (!chartElement) {
     alert('Chart not found');
@@ -46,22 +51,108 @@ export const exportChartToPDF = async () => {
 
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
+    const pageMargin = 10;
     const imgWidth = canvas.width;
     const imgHeight = canvas.height;
-    const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-    const imgX = (pdfWidth - imgWidth * ratio) / 2;
-    const imgY = 10;
+    const availableWidth = pdfWidth - (pageMargin * 2);
+    const ratio = Math.min(availableWidth / imgWidth, 80 / imgHeight);
+    const scaledWidth = imgWidth * ratio;
+    const scaledHeight = imgHeight * ratio;
+    const imgX = (pdfWidth - scaledWidth) / 2;
+    const imgY = pageMargin;
 
     pdf.addImage(
       imgData,
       'PNG',
       imgX,
       imgY,
-      imgWidth * ratio,
-      imgHeight * ratio
+      scaledWidth,
+      scaledHeight
     );
 
-    pdf.save(`budget-chart-${new Date().toISOString().split('T')[0]}.pdf`);
+    const formatCurrency = (value: number) => {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: budgetParams.currency,
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(value);
+    };
+
+    let yPosition = imgY + scaledHeight + 10;
+
+    pdf.setFontSize(12);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Budget Metrics', pageMargin, yPosition);
+    yPosition += 6;
+
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text(`Total Budget: ${formatCurrency(metrics.totalBudget)}`, pageMargin, yPosition);
+    yPosition += 5;
+    pdf.text(`Consumed Budget: ${formatCurrency(metrics.consumedBudget)}`, pageMargin, yPosition);
+    yPosition += 5;
+    pdf.text(`Consumption Rate: ${metrics.consumptionRate.toFixed(1)}%`, pageMargin, yPosition);
+    yPosition += 10;
+
+    pdf.setFontSize(12);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Iterations', pageMargin, yPosition);
+    yPosition += 6;
+
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica', 'bold');
+    const colX1 = pageMargin;
+    const colX2 = pageMargin + 30;
+    const colX3 = pageMargin + 60;
+    const colX4 = pageMargin + 90;
+    const colX5 = pageMargin + 120;
+
+    pdf.text('Iteration', colX1, yPosition);
+    pdf.text('Days', colX2, yPosition);
+    pdf.text('Team Size', colX3, yPosition);
+    pdf.text('Total Hours', colX4, yPosition);
+    pdf.text('Iteration Cost', colX5, yPosition);
+    yPosition += 5;
+
+    pdf.setFont('helvetica', 'normal');
+
+    const standardCost =
+      budgetParams.costPerHour *
+      budgetParams.teamSize *
+      budgetParams.workingDaysPerIteration *
+      8;
+
+    iterations.forEach((iteration) => {
+      if (yPosition > pdfHeight - 15) {
+        pdf.addPage();
+        yPosition = pageMargin;
+      }
+
+      const iterationCost = iteration.totalHours
+        ? iteration.totalHours * budgetParams.costPerHour
+        : standardCost;
+
+      if (iteration.isCurrent) {
+        pdf.setFillColor(255, 243, 205);
+        pdf.rect(colX1 - 2, yPosition - 3.5, pdfWidth - (pageMargin * 2), 5, 'F');
+        pdf.setFont('helvetica', 'bold');
+      }
+
+      pdf.text(`Iteration ${iteration.iterationNumber}`, colX1, yPosition);
+      pdf.text(iteration.iterationDays.toString(), colX2, yPosition);
+      pdf.text(iteration.teamSize.toString(), colX3, yPosition);
+      pdf.text(iteration.totalHours?.toString() || '-', colX4, yPosition);
+      pdf.text(formatCurrency(iterationCost), colX5, yPosition);
+
+      if (iteration.isCurrent) {
+        pdf.setFont('helvetica', 'normal');
+      }
+
+      yPosition += 5;
+    });
+
+    pdf.save(`budget-report-${new Date().toISOString().split('T')[0]}.pdf`);
   } catch (error) {
     console.error('Failed to export chart as PDF:', error);
     alert('Failed to export chart as PDF');
