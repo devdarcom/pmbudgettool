@@ -103,16 +103,12 @@ export const exportChartToPDF = async (
     pdf.setFontSize(9);
     pdf.setFont('helvetica', 'bold');
     const colX1 = pageMargin;
-    const colX2 = pageMargin + 30;
-    const colX3 = pageMargin + 60;
-    const colX4 = pageMargin + 90;
-    const colX5 = pageMargin + 120;
+    const colX2 = pageMargin + 50;
+    const colX3 = pageMargin + 100;
 
     pdf.text('Iteration', colX1, yPosition);
-    pdf.text('Days', colX2, yPosition);
-    pdf.text('Team Size', colX3, yPosition);
-    pdf.text('Total Hours', colX4, yPosition);
-    pdf.text('Iteration Cost', colX5, yPosition);
+    pdf.text('Total Hours', colX2, yPosition);
+    pdf.text('Iteration Cost', colX3, yPosition);
     yPosition += 5;
 
     pdf.setFont('helvetica', 'normal');
@@ -140,10 +136,8 @@ export const exportChartToPDF = async (
       }
 
       pdf.text(`Iteration ${iteration.iterationNumber}`, colX1, yPosition);
-      pdf.text(iteration.iterationDays.toString(), colX2, yPosition);
-      pdf.text(iteration.teamSize.toString(), colX3, yPosition);
-      pdf.text(iteration.totalHours?.toString() || '-', colX4, yPosition);
-      pdf.text(formatCurrency(iterationCost), colX5, yPosition);
+      pdf.text(iteration.totalHours?.toString() || '-', colX2, yPosition);
+      pdf.text(formatCurrency(iterationCost), colX3, yPosition);
 
       if (iteration.isCurrent) {
         pdf.setFont('helvetica', 'normal');
