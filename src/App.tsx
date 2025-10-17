@@ -156,6 +156,9 @@ function App() {
                 onToggleVisibility={handleToggleChartVisibility}
                 onExportPNG={exportChartToPNG}
                 onExportPDF={exportChartToPDF}
+                iterations={iterations}
+                budgetParams={budgetParams}
+                metrics={metrics}
               />
             </>
           )}

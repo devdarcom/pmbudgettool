@@ -13,7 +13,7 @@ import {
   ComposedChart,
   ReferenceLine,
 } from 'recharts';
-import { ChartData } from '../types/budget';
+import { ChartData, IterationData, BudgetParams } from '../types/budget';
 import { Download, FileText } from 'lucide-react';
 
 interface BudgetChartProps {
@@ -26,7 +26,14 @@ interface BudgetChartProps {
   currency: string;
   onToggleVisibility: (key: keyof BudgetChartProps['visibility']) => void;
   onExportPNG: () => void;
-  onExportPDF: () => void;
+  onExportPDF: (
+    iterations: IterationData[],
+    budgetParams: BudgetParams,
+    metrics: { totalBudget: number; consumedBudget: number; consumptionRate: number }
+  ) => void;
+  iterations: IterationData[];
+  budgetParams: BudgetParams;
+  metrics: { totalBudget: number; consumedBudget: number; consumptionRate: number };
 }
 
 export const BudgetChart: React.FC<BudgetChartProps> = ({
